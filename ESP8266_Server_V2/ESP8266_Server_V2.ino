@@ -18,7 +18,7 @@ const int led = 13;
 
 void handleRoot() {
   digitalWrite(led, 1);
-  server.send(200, "text/plain", "hello from esp8266!\r\n");
+  server.send(200, "text/plain", "hello\r\n");
   digitalWrite(led, 0);
 }
 
@@ -40,8 +40,7 @@ void handleNotFound() {
 }
 
 void handleAlarm() {
-  Serial.println("I hear something!");
-  server.send(200, "text/plain", "this text is here");
+  server.send(200, "text/plain", "Change alarm: /alarm/data?=<0 or 1>");
 
   String data = server.arg("data");
  
@@ -76,7 +75,7 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("esp8266")) {
+  if (MDNS.begin("homecontrolserver")) {
     Serial.println("MDNS responder started");
   }
 
