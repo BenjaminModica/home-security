@@ -12,56 +12,70 @@
 //const char* ssid = STASSID;
 //const char* password = STAPSK;
 
+//void handleNotFound() {}
+
 ESP8266WebServer server(80);
 
-const int led = 13;
+const int readyLed = 13;
+const int onLed = 15;
+const int button = 2;
+
+//STATES
+//0: Alarm OFF
+//1: Alarm READY
+//2: Alarm ON
+int state = 0;    
 
 void handleRoot() {
-  digitalWrite(led, 1);
   server.send(200, "text/plain", "hello\r\n");
-  digitalWrite(led, 0);
 }
 
-void handleNotFound() {
-  digitalWrite(led, 1);
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  }
-  server.send(404, "text/plain", message);
-  digitalWrite(led, 0);
-}
-
+/**
+ * Handles GET requests for /alarm/.
+ * Data recieved have to be 0 or 1. 
+ * Sends state as response
+ */
 void handleAlarm() {
-  server.send(200, "text/plain", "Change alarm: /alarm/data?=<0 or 1>");
-
+  //server.send(200, "text/plain", "Change alarm: /alarm/data?=<0 or 1>");
   String data = server.arg("data");
- 
+  Serial.println("Get request for handleAlarm");
   Serial.print("data recieved is:   ");
   Serial.println(data);
 
   if (data == "0") {
-    digitalWrite(led, 0);
+    state = 0;
+    server.send(200, "text/plain", String(state));
   } else if (data == "1") {
-    digitalWrite(led, 1);
+    state = 1;
+    server.send(200, "text/plain", String(state));
   } else {
     Serial.println("Cannot handle that request");
+    server.send(200, "text/plain", "Cannot handle that request");
   }
 }
 
+/**
+ * Handles get requests for /status/
+ * Sends the state as response
+ */
+void handleStatusRequest() {
+  server.send(200, "text/plain", String(state));
+}
+
 void setup(void) {
-  pinMode(led, OUTPUT);
-  digitalWrite(led, 0);
+  //pin and serial setup
+  pinMode(readyLed, OUTPUT);
+  pinMode(onLed, OUTPUT);
+  pinMode(button, INPUT);
+  digitalWrite(readyLed, 0);
+  digitalWrite(onLed, 0);
   Serial.begin(115200);
+  //pinMode(LED_BUILTIN, OUTPUT);
+  //digitalWrite(LED_BUILTIN, 1);
+
+  //wifi setup
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, passPhrase);
+  WiFi.begin(ssid, passWord);
   Serial.println("");
 
   // Wait for connection
@@ -75,7 +89,7 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("homecontrolserver")) {
+  if (MDNS.begin("homecontrolpanel")) {
     Serial.println("MDNS responder started");
   }
 
@@ -83,16 +97,41 @@ void setup(void) {
 
   server.on("/alarm", handleAlarm);
 
-  server.onNotFound(handleNotFound);
+  server.on("/status", handleStatusRequest);
 
-  //addHook? 
+  //server.onNotFound(handleNotFound);
 
   server.enableCORS(true);
   server.begin();
   Serial.println("HTTP server started");
+
+  state = 0;
 }
 
 void loop(void) {
   server.handleClient();
   MDNS.update();
+  updateState();
+  if (digitalRead(button) == 0 && state == 1) {state = 2; Serial.println("Alarm tripped");} //Only trip alarm if set to ready
+}
+
+/**
+ * Updates pins depending on state
+ */
+void updateState() {
+  switch (state) { 
+    case 0: //Alarm off
+      digitalWrite(readyLed, 0);
+      digitalWrite(onLed, 0);
+      break;
+    case 1: //Alarm ready
+      digitalWrite(readyLed, 1);
+      digitalWrite(onLed, 0);
+      break;
+    case 2: //Alarm on
+      digitalWrite(onLed, 1);
+      break;
+    default:
+      break;
+  }
 }
