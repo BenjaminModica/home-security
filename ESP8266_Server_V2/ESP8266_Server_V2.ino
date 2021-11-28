@@ -1,8 +1,10 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266WebServerSecure.h>
 #include <ESP8266mDNS.h>
 #include "secrets.h" //add WLAN credentials in here
+#include "certificate.h"
 
 //#ifndef STASSID
 //#define STASSID "SSID"
@@ -14,7 +16,7 @@
 
 //void handleNotFound() {}
 
-ESP8266WebServer server(80);
+BearSSL::ESP8266WebServerSecure server(8080);
 
 const int readyLed = 13;
 const int onLed1 = 0;
@@ -103,6 +105,10 @@ void setup(void) {
     Serial.println("MDNS responder started");
   }
 
+  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+
+  server.getServer().setRSACert(new BearSSL::X509List(serverCert), new BearSSL::PrivateKey(serverKey));
+
   server.on("/", handleRoot);
 
   server.on("/alarm", handleAlarm);
@@ -112,6 +118,7 @@ void setup(void) {
   //server.onNotFound(handleNotFound);
 
   server.enableCORS(true);
+  //server.setInsecure();
   server.begin();
   Serial.println("HTTP server started");
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>      
+<html>      
+<head>
+    <meta charset="UTF-8">
+    <script src="xhr.js" defer></script>      
+    <title>Home Control Panel</title>
+</head>      
+<body style="text-align: center;">      
+    <h1> Control Panel </h1>                                          
+    <br>      
+    <button style="margin: 10px;" id="alarm-off">ALARM OFF</button>      
+    <br>      
+    <button style="margin: 10px;" id="alarm-on">ALARM ON</button>   
+    <br>
+    <h2>Alarm status:</h2>
+    <h3 id="status">Status will shown here</h3>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+      
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLvZ4bs3a3pc59f5SEBfrWCt_C1-o3DI",
+          authDomain: "homecontrolpanel-d73c3.firebaseapp.com",
+          projectId: "homecontrolpanel-d73c3",
+          storageBucket: "homecontrolpanel-d73c3.appspot.com",
+          messagingSenderId: "939661912245",
+          appId: "1:939661912245:web:2dbca03396ae487d47f6fc"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+      </script>
+</body>      
+</html>
