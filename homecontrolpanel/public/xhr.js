@@ -1,10 +1,10 @@
 const offBtn = document.getElementById('alarm-off');
 const onBtn = document.getElementById('alarm-on');
 
-offBtn.addEventListener('click', () => sendHttpRequest('http://192.168.1.239:8080/alarm?data=0'));
-onBtn.addEventListener('click', () => sendHttpRequest('http://192.168.1.239:8080/alarm?data=1'));
+offBtn.addEventListener('click', () => sendHttpRequest('https://83.251.161.248:443/alarm?data=0'));
+onBtn.addEventListener('click', () => sendHttpRequest('https://83.251.161.248:443/alarm?data=1'));
 
-setInterval(() => sendHttpRequest('http://192.168.1.239:8080/status'), 1000);
+setInterval(() => sendHttpRequest('https://83.251.161.248:443/status'), 10000);
 
 function sendHttpRequest  (url) {
     const xhr = new XMLHttpRequest();

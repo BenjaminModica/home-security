@@ -13,10 +13,12 @@
 
 //const char* ssid = STASSID;
 //const char* password = STAPSK;
+const char *dname = "homecontrolpanel";
 
 //void handleNotFound() {}
 
-BearSSL::ESP8266WebServerSecure server(8080);
+BearSSL::ESP8266WebServerSecure server(443);
+//ESP8266WebServer serverHTTP(8080);
 
 const int readyLed = 13;
 const int onLed1 = 0;
@@ -32,6 +34,11 @@ const int pirSensor = 16;
 //1: Alarm READY
 //2: Alarm ON
 int state = 0;    
+
+//void secureRedirect() {
+//  serverHTTP.sendHeader("Location", String("https://homecontrolpanel.local"), true);
+//  serverHTTP.send(301, "text/plain", "");
+//}
 
 void handleRoot() {
   server.send(200, "text/plain", "hello\r\n");
@@ -101,11 +108,44 @@ void setup(void) {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (MDNS.begin("homecontrolpanel")) {
+  if (MDNS.begin("dname")) {
     Serial.println("MDNS responder started");
+    Serial.print("Server can be accessed at https://");
+    Serial.println(WiFi.localIP());
+//    Serial.print(" or at https://");
+//    Serial.print(dname);
+//    Serial.println(".local");
   }
 
-  configTime(3 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+  configTime(1 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+
+  //configTime("CET-1CEST,M3.5.0,M10.5.0/3" , "pool.ntp.org", "time.nis.gov");
+  // Wait till time is synced
+  Serial.print("Syncing time");
+  int i = 0;
+  while (time(nullptr) < 1000000000ul && i<100) {
+    Serial.print(".");
+    delay(100);
+    i++;
+  }
+  Serial.println();
+
+  time_t tnow = time(nullptr);
+  struct tm *timeinfo;
+  char buffer [80];
+
+
+  timeinfo = localtime (&tnow);
+  strftime (buffer,80,"Local time: %H:%M.",timeinfo);
+  Serial.println(buffer);
+  
+  timeinfo = gmtime (&tnow);
+  strftime (buffer,80,"UTC time: %H:%M.",timeinfo);
+  Serial.println(buffer); 
+
+//  serverHTTP.on("/", secureRedirect);
+//  serverHTTP.begin();
+//  Serial.println("HTTP server started");
 
   server.getServer().setRSACert(new BearSSL::X509List(serverCert), new BearSSL::PrivateKey(serverKey));
 
@@ -117,15 +157,17 @@ void setup(void) {
 
   //server.onNotFound(handleNotFound);
 
+//  serverHTTP.enableCORS(true);
   server.enableCORS(true);
   //server.setInsecure();
   server.begin();
-  Serial.println("HTTP server started");
+  Serial.println("HTTPS server started");
 
   state = 0;
 }
 
 void loop(void) {
+//  serverHTTP.handleClient();
   server.handleClient();
   MDNS.update();
   updateState();
