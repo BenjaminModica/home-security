@@ -11,24 +11,24 @@ R"=====(
 <body style="text-align: center;">      
     <h1> Control Panel </h1>                                          
     <br>      
-    <button style="margin: 10px;" id="alarm-off">ALARM OFF</button>      
+    <button style="margin: 10px;" id="alarm-off">Turn Off Alarm</button>      
     <br>      
-    <button style="margin: 10px;" id="alarm-on">ALARM ON</button>   
+    <button style="margin: 10px;" id="alarm-on">Set Alarm</button>   
     <br>
     <h2>Alarm status:</h2>
-    <h3 id="status">Status will shown here</h3>
+    <h3 id="status">%Status will shown here%</h3>
 <!--Javascript-->
 <script>
 const offBtn = document.getElementById('alarm-off');
 const onBtn = document.getElementById('alarm-on');
 
-offBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=0'));
-onBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=1'));
+offBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=alarmOff'));
+onBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=alarmOn'));
 
-setInterval(() => sendHttpRequest('http://83.251.161.248:255/status'), 10000);
+setInterval(() => sendHttpRequest('http://83.251.161.248:255/status'), 3000);
 
 function sendHttpRequest  (url) {
-    const xhr = new XMLHttpRequest();168.
+    const xhr = new XMLHttpRequest();
     xhr.open('GET', url);
 
     //Listen to response
@@ -38,12 +38,12 @@ function sendHttpRequest  (url) {
 
         //Update status on page
         const element = document.getElementById("status");
-        if (data == '0') {
+        if (data == 'alarmOff') {
             element.innerHTML = "OFF";
-        } else if (data == '1') {
+        } else if (data == 'alarmOn') {
             element.innerHTML = "READY";
-        } else if (data == '2') {
-            element.innerHTML = "ALARM TRIPPED";
+        } else if (data == 'alarmTrig') {
+            element.innerHTML = "ALARM TRIGGERED";
         } else {
             element.innerHTML = "Error";
         }

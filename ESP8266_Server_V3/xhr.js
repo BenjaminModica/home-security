@@ -1,13 +1,13 @@
 const offBtn = document.getElementById('alarm-off');
 const onBtn = document.getElementById('alarm-on');
 
-offBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=0'));
-onBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=1'));
+offBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=alarmOff'));
+onBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:255/alarm?data=alarmOn'));
 
-setInterval(() => sendHttpRequest('http://83.251.161.248:255/status'), 10000);
+setInterval(() => sendHttpRequest('http://83.251.161.248:255/status'), 3000);
 
 function sendHttpRequest  (url) {
-    const xhr = new XMLHttpRequest();168.
+    const xhr = new XMLHttpRequest();
     xhr.open('GET', url);
 
     //Listen to response
@@ -17,12 +17,12 @@ function sendHttpRequest  (url) {
 
         //Update status on page
         const element = document.getElementById("status");
-        if (data == '0') {
+        if (data == 'alarmOff') {
             element.innerHTML = "OFF";
-        } else if (data == '1') {
+        } else if (data == 'alarmOn') {
             element.innerHTML = "READY";
-        } else if (data == '2') {
-            element.innerHTML = "ALARM TRIPPED";
+        } else if (data == 'alarmTrig') {
+            element.innerHTML = "ALARM TRIGGERED";
         } else {
             element.innerHTML = "Error";
         }
