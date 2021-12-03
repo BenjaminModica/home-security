@@ -4,6 +4,7 @@ const onBtn = document.getElementById('alarm-on');
 offBtn.addEventListener('click', () => sendHttpRequest('https://83.251.161.248:443/alarm?data=0'));
 onBtn.addEventListener('click', () => sendHttpRequest('https://83.251.161.248:443/alarm?data=1'));
 
+sendHttpRequest('https://83.251.161.248:443/status'); //Send once first then every tenth second
 setInterval(() => sendHttpRequest('https://83.251.161.248:443/status'), 10000);
 
 function sendHttpRequest  (url) {

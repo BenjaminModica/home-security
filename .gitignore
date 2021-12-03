@@ -3,3 +3,5 @@ ESP8266_Server_V2/secrets.h
 ESP8266_Server_V2/certificate.h
 ESP8266_Server/ESP8266_Server.ino
 homecontrolpanel/firebase-tools-instant-win.exe
+ESP8266_Server_V3/secrets.h
+ESP8266_Server_V3/certificate.h

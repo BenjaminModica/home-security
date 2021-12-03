@@ -1,3 +1,24 @@
+const char webpage[] =
+R"=====(
+<!DOCTYPE html>      
+<html>      
+<head>
+    <meta charset="UTF-8">
+    <!--<script src="xhr.js" defer></script>-->      
+    <title>Home Control Panel</title>
+</head>      
+<!--HTML-->
+<body style="text-align: center;">      
+    <h1> Control Panel </h1>                                          
+    <br>      
+    <button style="margin: 10px;" id="alarm-off">ALARM OFF</button>      
+    <br>      
+    <button style="margin: 10px;" id="alarm-on">ALARM ON</button>   
+    <br>
+    <h2>Alarm status:</h2>
+    <h3 id="status">Status will shown here</h3>
+<!--Javascript-->
+<script>
 const offBtn = document.getElementById('alarm-off');
 const onBtn = document.getElementById('alarm-on');
 
@@ -30,4 +51,7 @@ function sendHttpRequest  (url) {
 
     xhr.send();
 };
-
+</script>
+</body>      
+</html>
+)=====";
