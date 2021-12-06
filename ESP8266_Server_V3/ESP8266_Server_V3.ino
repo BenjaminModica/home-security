@@ -4,8 +4,8 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESP_Mail_Client.h>
-#include "secrets.h" //add WLAN credentials in here
-#include "webpage.h"
+#include "secrets.h" //add WLAN and e-mail credentials in here
+#include "webpage.h" //HMTL, CSS and JS code. Easier to write here than in arduino ide
 
 //Host and port for gmail adress
 #define SMTP_HOST "smtp.gmail.com"
@@ -83,24 +83,27 @@ const char *dname = "homecontrolpanel";
 
 ESP8266WebServer server(8000);
 
-const int readyLed = 13;
-const int onLed1 = 0;
+const int readyLed = 13; //Green when alarm is set, otherwise off
+const int onLed1 = 0; //led1 and led2 will flash when alarm is triggered. If sound is wanted connect active piezo to one of these
 const int onLed2 = 12;
-//const int button = 15; Has pulldown resistor, use as button
-const int trigPin = 5;
-const int echoPin = 4;
-const int pirSensor = 16;
+//const int button = 15; Has pulldown resistor, if needed: use as button
+const int trigPin = 5; //Used for HC-sr04 distance sensor
+const int echoPin = 4; //Used for HC-sr04 distance sensor
+const int pirSensor = 16; //For PIR detection
 boolean doorOpen = false;
-const int blueLed = 2;
+const int blueLed = 2; //Built in LED on esp8266. Will turn off when esp is connected to wifi
 int timer = millis();
-const int period = 2000;
+const int period = 2000; //How often HC-sr04 checks the distance to door. 
 
 //STATES
 //alarmOff: Alarm OFF
-//alarmOn: Alarm READY
-//alarmTrig: Alarm ON
+//alarmOn: Alarm ON and ready, reading PIR and HC-sr04 inputs
+//alarmTrig: Alarm ON and triggered, will send email to recipent. leds flashing
 String state;
 
+/**
+ * Sends index.html to client
+ */
 void handleRoot() {
   server.send(200, "text/html", webpage);
 }
@@ -138,7 +141,7 @@ void handleStatusRequest() {
 }
 
 void setup(void) {
-  //pin and serial setup
+  //pinmodes and serial setup
   pinMode(readyLed, OUTPUT);
   pinMode(onLed1, OUTPUT);
   pinMode(onLed2, OUTPUT);
@@ -148,10 +151,10 @@ void setup(void) {
   digitalWrite(readyLed, 0);
   digitalWrite(onLed1, 0);
   digitalWrite(onLed2, 0);
-  Serial.begin(115200);
   pinMode(blueLed, OUTPUT);
   digitalWrite(blueLed, 0);
   pinMode(pirSensor, INPUT);
+  Serial.begin(115200);
 
   //wifi setup
   WiFi.mode(WIFI_STA);
@@ -182,7 +185,7 @@ void setup(void) {
 
   server.on("/status", handleStatusRequest);
 
-  server.enableCORS(true);
+  server.enableCORS(true); //Fixed my CORS error problem
   server.begin();
   Serial.println("HTTP server started");
   digitalWrite(blueLed, 1);
@@ -200,11 +203,11 @@ void loop(void) {
   }
   
   if (state == "alarmOn" && millis() >= timer + period) {
-    distanceSensor();
     timer = millis();
+    distanceSensor();
   }
   
-  //Will happen once when alarm is triggered
+  //Will happen once when alarm is triggered. Needs alarm to be on and door to have been opened.
   if (digitalRead(pirSensor) == HIGH && state == "alarmOn" && doorOpen) {
     state = "alarmTrig";
     Serial.println("detects stuff");
@@ -232,8 +235,9 @@ void updateState() {
   }
 }
 
-/*
-   Flashes two LEDs if alarm is triggered
+/**
+ * Flashes two LEDs if alarm is triggered 
+ * Connect active Piezo-element if sound is wanted
 */
 void loopLEDs() {
   if (!digitalRead(onLed1)) {
@@ -247,7 +251,9 @@ void loopLEDs() {
 }
 
 /**
- * Takes care of everything to do with the distance sensor
+ * HC-sr04 ultra-sound distance sensor
+ * Will detect if door is opened. 
+ * times a pulse to calculate distance: [s] * [m/s] = [m]
  */
 void distanceSensor() {
   digitalWrite(trigPin, LOW);
@@ -257,7 +263,7 @@ void distanceSensor() {
   digitalWrite(trigPin, LOW);
   
   const unsigned long duration= pulseIn(echoPin, HIGH);
-  int distance= duration/29/2;
+  int distance= duration/29/2; //multiply with speed of sound (cm) and divide by 2 because we want half the distance
 
   if(duration==0){
    Serial.println("Warning: no pulse from sensor");
@@ -272,6 +278,7 @@ void distanceSensor() {
 
   if (distance < 10) { 
     doorOpen = true;
+    timer += 10000; //Wait 10 seconds for pir detection after doorOpen event
   } else {
     doorOpen = false;
   }
