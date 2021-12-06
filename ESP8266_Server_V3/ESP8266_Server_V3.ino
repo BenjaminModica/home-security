@@ -87,9 +87,13 @@ const int readyLed = 13;
 const int onLed1 = 0;
 const int onLed2 = 12;
 //const int button = 15; Has pulldown resistor, use as button
-//const int trigPin = 5;
-//const int echoPin = 4;
+const int trigPin = 5;
+const int echoPin = 4;
 const int pirSensor = 16;
+boolean doorOpen = false;
+const int blueLed = 2;
+int timer = millis();
+const int period = 2000;
 
 //STATES
 //alarmOff: Alarm OFF
@@ -138,13 +142,15 @@ void setup(void) {
   pinMode(readyLed, OUTPUT);
   pinMode(onLed1, OUTPUT);
   pinMode(onLed2, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(trigPin, OUTPUT);
   //pinMode(button, INPUT);
   digitalWrite(readyLed, 0);
   digitalWrite(onLed1, 0);
   digitalWrite(onLed2, 0);
   Serial.begin(115200);
-  //pinMode(LED_BUILTIN, OUTPUT);
-  //digitalWrite(LED_BUILTIN, 1);
+  pinMode(blueLed, OUTPUT);
+  digitalWrite(blueLed, 0);
   pinMode(pirSensor, INPUT);
 
   //wifi setup
@@ -179,6 +185,7 @@ void setup(void) {
   server.enableCORS(true);
   server.begin();
   Serial.println("HTTP server started");
+  digitalWrite(blueLed, 1);
 
   state = "alarmOff";
 }
@@ -187,12 +194,18 @@ void loop(void) {
   server.handleClient();
   MDNS.update();
   updateState();
+  
   if (state == "alarmTrig") {
     loopLEDs();
   }
-
+  
+  if (state == "alarmOn" && millis() >= timer + period) {
+    distanceSensor();
+    timer = millis();
+  }
+  
   //Will happen once when alarm is triggered
-  if (digitalRead(pirSensor) == HIGH && state == "alarmOn") {
+  if (digitalRead(pirSensor) == HIGH && state == "alarmOn" && doorOpen) {
     state = "alarmTrig";
     Serial.println("detects stuff");
     loopLEDs();
@@ -231,4 +244,35 @@ void loopLEDs() {
     digitalWrite(onLed2, HIGH);
   }
   delay(100);
+}
+
+/**
+ * Takes care of everything to do with the distance sensor
+ */
+void distanceSensor() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  const unsigned long duration= pulseIn(echoPin, HIGH);
+  int distance= duration/29/2;
+
+  if(duration==0){
+   Serial.println("Warning: no pulse from sensor");
+  } 
+  else{
+      //For debugging purposes:
+      Serial.print("distance to nearest object: ");
+      Serial.print(distance);
+      Serial.println(" cm");
+  }
+  delay(100);
+
+  if (distance < 10) { 
+    doorOpen = true;
+  } else {
+    doorOpen = false;
+  }
 }
