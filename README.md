@@ -1,5 +1,7 @@
 # Home_Security
  Home security project using an ESP8266 as a web server
+ 
+ Source for libraries: https://github.com/esp8266/Arduino
 
 V1 is scratched
 
