@@ -87,10 +87,7 @@ const int readyLed = 13; //Green when alarm is set, otherwise off
 const int onLed1 = 0; //led1 and led2 will flash when alarm is triggered. If sound is wanted connect active piezo to one of these
 const int onLed2 = 12;
 //const int button = 15; Has pulldown resistor, if needed: use as button
-const int trigPin = 5; //Used for HC-sr04 distance sensor
-const int echoPin = 4; //Used for HC-sr04 distance sensor
-const int pirSensor = 16; //For PIR detection
-boolean doorOpen = false;
+const int hallEffectPin = 4; //Used for HC-sr04 distance sensor
 const int blueLed = 2; //Built in LED on esp8266. Will turn off when esp is connected to wifi
 int timer = millis();
 const int period = 2000; //How often HC-sr04 checks the distance to door. 
@@ -145,15 +142,13 @@ void setup(void) {
   pinMode(readyLed, OUTPUT);
   pinMode(onLed1, OUTPUT);
   pinMode(onLed2, OUTPUT);
-  pinMode(echoPin, INPUT);
-  pinMode(trigPin, OUTPUT);
+  pinMode(hallEffectPin, INPUT);
   //pinMode(button, INPUT);
   digitalWrite(readyLed, 0);
   digitalWrite(onLed1, 0);
   digitalWrite(onLed2, 0);
   pinMode(blueLed, OUTPUT);
   digitalWrite(blueLed, 0);
-  pinMode(pirSensor, INPUT);
   Serial.begin(115200);
 
   //wifi setup
@@ -202,13 +197,8 @@ void loop(void) {
     loopLEDs();
   }
   
-  if (state == "alarmOn" && millis() >= timer + period) {
-    timer = millis();
-    distanceSensor();
-  }
-  
   //Will happen once when alarm is triggered. Needs alarm to be on and door to have been opened.
-  if (digitalRead(pirSensor) == HIGH && state == "alarmOn" && doorOpen) {
+  if (digitalRead(hallEffectPin) == HIGH && state == "alarmOn") {
     state = "alarmTrig";
     Serial.println("detects stuff");
     loopLEDs();
@@ -248,38 +238,4 @@ void loopLEDs() {
     digitalWrite(onLed2, HIGH);
   }
   delay(100);
-}
-
-/**
- * HC-sr04 ultra-sound distance sensor
- * Will detect if door is opened. 
- * times a pulse to calculate distance: [s] * [m/s] = [m]
- */
-void distanceSensor() {
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  
-  const unsigned long duration= pulseIn(echoPin, HIGH);
-  int distance= duration/29/2; //multiply with speed of sound (cm) and divide by 2 because we want half the distance
-
-  if(duration==0){
-   Serial.println("Warning: no pulse from sensor");
-  } 
-  else{
-      //For debugging purposes:
-      Serial.print("distance to nearest object: ");
-      Serial.print(distance);
-      Serial.println(" cm");
-  }
-  delay(100);
-
-  if (distance > 10) { 
-    doorOpen = true;
-    timer += 10000; //Wait 10 seconds for pir detection after doorOpen event
-  } else {
-    doorOpen = false;
-  }
 }
