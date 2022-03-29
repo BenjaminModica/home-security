@@ -22,10 +22,10 @@ R"=====(
 const offBtn = document.getElementById('alarm-off');
 const onBtn = document.getElementById('alarm-on');
 
-offBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:65477/alarm?data=alarmOff'));
-onBtn.addEventListener('click', () => sendHttpRequest('http://83.251.161.248:65477/alarm?data=alarmOn'));
+offBtn.addEventListener('click', () => sendHttpRequest('http://188.151.232.204:65477/alarm?data=alarmOff'));
+onBtn.addEventListener('click', () => sendHttpRequest('http://188.151.232.204:65477/alarm?data=alarmOn'));
 
-setInterval(() => sendHttpRequest('http://83.251.161.248:65477/status'), 3000)
+setInterval(() => sendHttpRequest('http://188.151.232.204:65477/status'), 3000)
 
 function sendHttpRequest  (url) {
     const xhr = new XMLHttpRequest();

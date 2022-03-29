@@ -276,7 +276,7 @@ void distanceSensor() {
   }
   delay(100);
 
-  if (distance < 10) { 
+  if (distance > 10) { 
     doorOpen = true;
     timer += 10000; //Wait 10 seconds for pir detection after doorOpen event
   } else {
