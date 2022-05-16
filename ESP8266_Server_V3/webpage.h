@@ -24,10 +24,17 @@ R"=====(
 const offBtn = document.getElementById('alarm-off');
 const onBtn = document.getElementById('alarm-on');
 
-offBtn.addEventListener('click', () => sendHttpRequest("http://" + myIp + "/alarm?data=alarmOff"));
-onBtn.addEventListener('click', () => sendHttpRequest("http://" + myIp + "/alarm?data=alarmOn"));
+//console.log(myIp);
+//console.log(IP_ADRESS);
 
-setInterval(() => sendHttpRequest("http://" + myIp + "/status"), 3000)
+//offBtn.addEventListener('click', () => sendHttpRequest("http://" + myIp + "/alarm?data=alarmOff"));
+//onBtn.addEventListener('click', () => sendHttpRequest("http://" + myIp + "/alarm?data=alarmOn"));
+
+offBtn.addEventListener('click', () => sendHttpRequest("http://192.168.1.239:8000/alarm?data=alarmOff"));
+onBtn.addEventListener('click', () => sendHttpRequest("http://192.168.1.239:8000/alarm?data=alarmOn"));
+
+//setInterval(() => sendHttpRequest("http://" + myIp + "/status"), 3000)
+setInterval(() => sendHttpRequest("http://192.168.1.239:8000/status"), 3000)
 
 function sendHttpRequest  (url) {
     const xhr = new XMLHttpRequest();

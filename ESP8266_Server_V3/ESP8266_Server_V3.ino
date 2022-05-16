@@ -5,10 +5,11 @@
 #include <ESP8266mDNS.h>
 #include <ESP_Mail_Client.h>
 #include "secrets.h" //add WLAN and e-mail credentials in here
+//#include "ip.h"
 #include "webpage.h" //HMTL, CSS and JS code. Easier to write here than in arduino ide
 
 //Host and port for gmail adress
-#define SMTP_HOST "smtp.gmail.com"
+#define SMTP_HOST "smtp.zoho.eu"
 #define SMTP_PORT 465
 
 //SMTP session used for sending emails
