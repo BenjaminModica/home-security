@@ -1,4 +1,4 @@
-# Home_Security
+# Home Security
 IoT home security project using a Raspberry Pi Pico as a TCP web server and controller for PIR sensor and RFID tag reader.
 
 ~~Home security project using an ESP8266 as a web server and controller for sensors.~~
