@@ -19,7 +19,7 @@
 #define TCP_PORT 4242
 #define DEBUG_printf printf
 #define BUF_SIZE_RECV 1
-#define BUF_SIZE_SENT 24
+#define BUF_SIZE_SENT 56
 #define TEST_ITERATIONS 10
 #define POLL_TIME_S 60
 
@@ -34,8 +34,12 @@
 #define TRIPPED_STATE 3
 #define ALARM_STATE 4
 
+#define ALARM_DEACTIVATION 0
+#define ALARM_ACTIVATION 1
+
 static uint8_t state;
 static uint8_t auth_counter;
+static bool timed_out;
 
 typedef struct TCP_SERVER_T_ {
     struct tcp_pcb *server_pcb;

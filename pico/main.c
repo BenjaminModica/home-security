@@ -23,6 +23,7 @@ int main() {
     uint8_t tag2[] = {0x03, 0x3A, 0xB8, 0x91};
     state = DEACTIVATED_STATE;
     auth_counter = 0;
+    timed_out = false;
 
     MFRC522Ptr_t mfrc = MFRC522_Init();
     PCD_Init(mfrc, spi0);
@@ -41,30 +42,40 @@ int main() {
     gpio_set_dir(PIR_PIN, GPIO_IN);
 
     while(1) {
+        uint8_t command;
 
         switch (state) {
             case DEACTIVATED_STATE:
                 //Fix so that wifi exits this state
                 gpio_put(LED_PIN_GREEN, 1);
-                sleep_ms(5000);
-                state = ACTIVATED_STATE;
+                command = multicore_fifo_pop_blocking();
+                if (command == ALARM_ACTIVATION) state = ACTIVATED_STATE;
                 break;
             case ACTIVATED_STATE:
                 //Wait for PIR sensor to trip
-                auth_counter = 0;
                 gpio_put(LED_PIN_GREEN, 0);
+
+                if (multicore_fifo_rvalid()) {
+                    command = multicore_fifo_pop_blocking();
+                    if (command == ALARM_DEACTIVATION) state = DEACTIVATED_STATE;
+                }
+
                 if (gpio_get(PIR_PIN) == 1) {
                     state = TRIPPED_STATE;
                 }
                 break;
             case TRIPPED_STATE:
+                auth_counter = 0;
                 gpio_put(LED_PIN_YELLOW, 1);
                 add_repeating_timer_ms(500, repeating_timer_callback, NULL, &timer_slow);
                 add_repeating_timer_ms(1000, repeating_timer_callback_counter, NULL, &timer_counter);
+                timed_out = false;
+                //Clear UID
 
                 //Wait for new card
                 printf("Waiting for card\n\r");
                 while(auth_counter < 10 && !PICC_IsNewCardPresent(mfrc));
+                if(auth_counter >= 10) timed_out = true;
                 //Select the card
                 printf("Selecting card\n\r");
                 PICC_ReadCardSerial(mfrc);
@@ -79,7 +90,7 @@ int main() {
                     printf("%x ", mfrc->uid.uidByte[i]);
                 } printf("\n\r");
 
-                if(memcmp(mfrc->uid.uidByte, tag1, 4) == 0 || memcmp(mfrc->uid.uidByte, tag2, 4) == 0) {
+                if(( memcmp(mfrc->uid.uidByte, tag1, 4) == 0 || memcmp(mfrc->uid.uidByte, tag2, 4) == 0 ) && !timed_out) {
                     printf("Authentication Success\n\r");
                     gpio_put(LED_PIN_GREEN, 1);
                     gpio_put(LED_PIN_RED, 0);
@@ -197,7 +208,7 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
     }
     */
 
-    memcpy(state->buffer_sent, "\rLed on: 1\n\rLed off: 0\n\r", BUF_SIZE_SENT);
+    memcpy(state->buffer_sent, "To activate alarm enter: 1\n\rTo deactive alarm enter: 0\n\r", BUF_SIZE_SENT);
 
     state->sent_len = 0;
     DEBUG_printf("Writing %ld bytes to client\n", BUF_SIZE_SENT);
@@ -254,12 +265,14 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
 
         if (memcmp(state->buffer_recv, ON, BUF_SIZE_RECV) == 0) {
             //Turn on led
-            DEBUG_printf("LED ON\n");
+            DEBUG_printf("Alarm Activated\n");
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+            multicore_fifo_push_blocking(ALARM_ACTIVATION);
         } else if (memcmp(state->buffer_recv, OFF, BUF_SIZE_RECV) == 0) {
             //turn off led
-            DEBUG_printf("LED OFF\n");
+            DEBUG_printf("Alarm Deactivated\n");
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+            multicore_fifo_push_blocking(ALARM_DEACTIVATION);
         } else {
             DEBUG_printf("Input Error");
         }
