@@ -19,7 +19,7 @@
 #define TCP_PORT 4242
 #define DEBUG_printf printf
 #define BUF_SIZE_RECV 1
-#define BUF_SIZE_SENT 56
+#define BUF_SIZE_SENT 1
 #define TEST_ITERATIONS 10
 #define POLL_TIME_S 60
 
@@ -28,6 +28,7 @@
 #define LED_PIN_YELLOW 22
 #define PIEZO_PIN 14
 #define PIR_PIN 26
+#define BTN_PIN 15
 
 #define DEACTIVATED_STATE 1
 #define ACTIVATED_STATE 2
@@ -37,7 +38,7 @@
 #define ALARM_DEACTIVATION 0
 #define ALARM_ACTIVATION 1
 
-static uint8_t state;
+static uint8_t app_state;
 static uint8_t auth_counter;
 static bool timed_out;
 

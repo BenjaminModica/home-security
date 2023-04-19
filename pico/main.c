@@ -21,7 +21,7 @@ int main() {
     //Declare owned tags
     uint8_t tag1[] = {0x93, 0xE3, 0x9A, 0x92};
     uint8_t tag2[] = {0x03, 0x3A, 0xB8, 0x91};
-    state = DEACTIVATED_STATE;
+    app_state = DEACTIVATED_STATE;
     auth_counter = 0;
     timed_out = false;
 
@@ -35,21 +35,28 @@ int main() {
     gpio_init(LED_PIN_YELLOW);
     gpio_init(PIEZO_PIN);
     gpio_init(PIR_PIN);
+    gpio_init(BTN_PIN);
     gpio_set_dir(LED_PIN_GREEN, GPIO_OUT);
     gpio_set_dir(LED_PIN_RED, GPIO_OUT);
     gpio_set_dir(LED_PIN_YELLOW, GPIO_OUT);
     gpio_set_dir(PIEZO_PIN, GPIO_OUT);
     gpio_set_dir(PIR_PIN, GPIO_IN);
+    gpio_set_dir(BTN_PIN, GPIO_IN);
 
     while(1) {
         uint8_t command;
 
-        switch (state) {
+        switch (app_state) {
             case DEACTIVATED_STATE:
                 //Fix so that wifi exits this state
                 gpio_put(LED_PIN_GREEN, 1);
-                command = multicore_fifo_pop_blocking();
-                if (command == ALARM_ACTIVATION) state = ACTIVATED_STATE;
+
+                if (multicore_fifo_rvalid()) {
+                    command = multicore_fifo_pop_blocking();
+                    if (command == ALARM_ACTIVATION) app_state = ACTIVATED_STATE;
+                }
+                
+                if (gpio_get(BTN_PIN) == 1) app_state = ACTIVATED_STATE;
                 break;
             case ACTIVATED_STATE:
                 //Wait for PIR sensor to trip
@@ -57,11 +64,11 @@ int main() {
 
                 if (multicore_fifo_rvalid()) {
                     command = multicore_fifo_pop_blocking();
-                    if (command == ALARM_DEACTIVATION) state = DEACTIVATED_STATE;
+                    if (command == ALARM_DEACTIVATION) app_state = DEACTIVATED_STATE;
                 }
 
                 if (gpio_get(PIR_PIN) == 1) {
-                    state = TRIPPED_STATE;
+                    app_state = TRIPPED_STATE;
                 }
                 break;
             case TRIPPED_STATE:
@@ -98,7 +105,7 @@ int main() {
                     gpio_put(PIEZO_PIN, 0);
                     cancel_repeating_timer(&timer_slow);
                     cancel_repeating_timer(&timer_counter);
-                    state = DEACTIVATED_STATE;
+                    app_state = DEACTIVATED_STATE;
                 } else {
                     printf("Authentication Failed\n\r");
                     gpio_put(LED_PIN_GREEN, 0);
@@ -107,14 +114,14 @@ int main() {
                     gpio_put(PIEZO_PIN, 1);
                     cancel_repeating_timer(&timer_slow);
                     cancel_repeating_timer(&timer_counter);
-                    state = ALARM_STATE;
+                    app_state = ALARM_STATE;
                 }
                 break;
             case ALARM_STATE:
                 gpio_put(LED_PIN_RED, 1);
                 add_repeating_timer_ms(100, repeating_timer_callback, NULL, &timer_fast);
                 sleep_ms(5000);
-                state = DEACTIVATED_STATE;
+                app_state = DEACTIVATED_STATE;
                 cancel_repeating_timer(&timer_fast);
                 gpio_put(LED_PIN_RED, 0);
                 break;
@@ -208,7 +215,24 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
     }
     */
 
-    memcpy(state->buffer_sent, "To activate alarm enter: 1\n\rTo deactive alarm enter: 0\n\r", BUF_SIZE_SENT);
+    switch(app_state) {
+        case DEACTIVATED_STATE:
+            memcpy(state->buffer_sent, "1", BUF_SIZE_SENT);
+            break;
+        case ACTIVATED_STATE:
+            memcpy(state->buffer_sent, "2", BUF_SIZE_SENT);
+            break;
+        case TRIPPED_STATE:
+            memcpy(state->buffer_sent, "3", BUF_SIZE_SENT);
+            break;
+        case ALARM_STATE:
+            memcpy(state->buffer_sent, "4", BUF_SIZE_SENT);
+            break;
+        default:
+            memcpy(state->buffer_sent, "E", BUF_SIZE_SENT);
+    }
+
+    //memcpy(state->buffer_sent, (int*) &app_state, BUF_SIZE_SENT);
 
     state->sent_len = 0;
     DEBUG_printf("Writing %ld bytes to client\n", BUF_SIZE_SENT);
