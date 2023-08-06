@@ -5,6 +5,5 @@ homecontrolpanel/firebase-tools-instant-win.exe
 ESP8266_Server_V3/secrets.h
 ESP8266_Server_V3/certificate.h
 ESP8266_Server_V3/ip.h
-pico/CMakeLists.txt
 pico/build/
 pico/secrets.h
