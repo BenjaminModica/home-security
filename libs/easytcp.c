@@ -162,10 +162,10 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb, uint8_t data) {
 bool is_client_connected(void *arg) {
     TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
     if  (state->client_pcb != NULL) {
-        printf("client connected\n");
+        //printf("client connected\n");
         return true;
     } else {
-        printf("client not connected\n");
+        //printf("client not connected\n");
         return false;
     }
 }

@@ -86,7 +86,7 @@ int main() {
                     if (command == ALARM_ACTIVATION) app_state = ACTIVATED_STATE;
                 }
                 
-                //For button activation
+                //For button activation (in the future add timer here?)
                 if (gpio_get(BTN_PIN) == 1) app_state = ACTIVATED_STATE;
                 break;
             case ACTIVATED_STATE:
